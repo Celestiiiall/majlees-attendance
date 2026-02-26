@@ -1,4 +1,4 @@
-const CACHE_NAME = "majlees-attendance-v2";
+const CACHE_NAME = "majlees-attendance-v3";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -32,6 +32,27 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+  const isSameOrigin = requestUrl.origin === self.location.origin;
+  const isAppShellRequest =
+    isSameOrigin &&
+    ["document", "script", "style", "manifest", "image"].includes(event.request.destination);
+
+  if (isAppShellRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html"))),
+    );
     return;
   }
 

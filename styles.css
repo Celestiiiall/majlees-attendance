@@ -150,6 +150,12 @@ select {
   color: var(--ink);
 }
 
+/* Keep native dropdown option text readable across mobile browsers. */
+select option {
+  background: #ffffff;
+  color: #111827;
+}
+
 input:focus,
 select:focus {
   outline: 2px solid color-mix(in oklab, var(--accent) 55%, white);
@@ -375,6 +381,16 @@ tbody td {
 
 .guest-mode table {
   min-width: 560px;
+}
+
+/* Enforce guest-only columns even if stale JS is temporarily cached. */
+body.guest-mode thead th:nth-child(4),
+body.guest-mode thead th:nth-child(5),
+body.guest-mode thead th:nth-child(6),
+body.guest-mode tbody td:nth-child(4),
+body.guest-mode tbody td:nth-child(5),
+body.guest-mode tbody td:nth-child(6) {
+  display: none;
 }
 
 @media (max-width: 760px) {
