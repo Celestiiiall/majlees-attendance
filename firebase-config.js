@@ -3,12 +3,13 @@ window.MAJLEES_SYNC = {
   roomId: "majlees-main",
   databaseRoot: "majleesAttendance",
   firebaseConfig: {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  }
+    apiKey: "AIzaSyAiap9ssh7G8ZeASRnnbLhugZwM6Ojzeq8",
+    authDomain: "majleesattendance.firebaseapp.com",
+    databaseURL: "https://majleesattendance-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "majleesattendance",
+    storageBucket: "majleesattendance.firebasestorage.app",
+    messagingSenderId: "478125335199",
+    appId: "1:478125335199:web:ded1ded146a89e891d38aa",
+    measurementId: "G-8YRFT3Q74X",
+  },
 };
