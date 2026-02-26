@@ -767,6 +767,28 @@ function getCloudSyncConfig() {
   };
 }
 
+function hasPlaceholderFirebaseConfig(firebaseConfig) {
+  const requiredKeys = [
+    "apiKey",
+    "authDomain",
+    "databaseURL",
+    "projectId",
+    "storageBucket",
+    "messagingSenderId",
+    "appId",
+  ];
+
+  return requiredKeys.some((key) => {
+    const value = firebaseConfig?.[key];
+    if (typeof value !== "string" || !value.trim()) {
+      return true;
+    }
+
+    const text = value.trim();
+    return text.includes("YOUR_") || text.includes("YOUR_PROJECT");
+  });
+}
+
 function initCloudSync() {
   const config = getCloudSyncConfig();
 
@@ -782,6 +804,11 @@ function initCloudSync() {
 
   if (!config.firebaseConfig || !config.firebaseConfig.apiKey || !config.firebaseConfig.databaseURL) {
     setSyncStatus("Cloud sync disabled. Fill firebaseConfig in firebase-config.js.", "warn");
+    return;
+  }
+
+  if (hasPlaceholderFirebaseConfig(config.firebaseConfig)) {
+    setSyncStatus("Cloud sync disabled. Replace placeholder Firebase values in firebase-config.js.", "warn");
     return;
   }
 
