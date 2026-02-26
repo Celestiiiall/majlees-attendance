@@ -13,6 +13,12 @@ Current default is `Guest-only mode`:
 - Guests can only submit `name + expected arrival time`
 - Host/session/admin controls are hidden from the public page
 
+Admin access:
+- Open the same page with `?admin=1` appended to the URL
+- Example: `https://celestiiiall.github.io/majlees-attendance/?admin=1`
+
+Note: this is a convenience toggle in a static app, not secure authentication.
+
 ## Run locally
 
 This app has no dependencies.

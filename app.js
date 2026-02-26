@@ -1,7 +1,9 @@
 const STORAGE_KEY = "majlees-attendance-v1";
 const HOST_OPTIONS = ["Majlees Senior", "Majlees Junior"];
 const DEFAULT_HOST = HOST_OPTIONS[0];
-const GUEST_ONLY_MODE = true;
+const ADMIN_QUERY_PARAM = "admin";
+const IS_ADMIN = new URLSearchParams(window.location.search).get(ADMIN_QUERY_PARAM) === "1";
+const GUEST_ONLY_MODE = !IS_ADMIN;
 
 const dom = {
   sessionDate: document.getElementById("session-date"),
