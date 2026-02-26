@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Majlees Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <main class="app-shell">
+      <header class="panel intro" aria-label="Majlees session details">
+        <div>
+          <p class="eyebrow">Majlees Console</p>
+          <h1>Attendance & Arrival Tracker</h1>
+          <p class="subtitle">
+            Keep one clean view of today’s Majlees: who is expected, when they may show up,
+            and who has already arrived.
+          </p>
+        </div>
+
+        <div class="session-grid">
+          <label>
+            Session Date
+            <input id="session-date" type="date" />
+          </label>
+          <label>
+            Start Time
+            <input id="session-time" type="time" />
+          </label>
+          <label>
+            Host
+            <input id="session-host" type="text" placeholder="e.g., Ahmed" />
+          </label>
+          <button id="save-session" type="button">Save Session</button>
+        </div>
+
+        <p id="session-summary" class="session-summary"></p>
+      </header>
+
+      <section class="panel split">
+        <div>
+          <h2>Add Guest</h2>
+          <form id="guest-form" class="guest-form">
+            <label>
+              Guest Name
+              <input id="guest-name" type="text" placeholder="e.g., Salem" required />
+            </label>
+            <label>
+              Expected Arrival
+              <input id="guest-expected" type="time" required />
+            </label>
+            <button type="submit">Add to List</button>
+          </form>
+        </div>
+
+        <div class="outlook" aria-live="polite">
+          <h2>Arrival Outlook</h2>
+          <p id="next-up" class="next-up"></p>
+          <ul id="timeline" class="timeline"></ul>
+        </div>
+      </section>
+
+      <section class="stats" aria-live="polite">
+        <article class="panel stat-card">
+          <p>Total Guests</p>
+          <strong id="stat-total">0</strong>
+        </article>
+        <article class="panel stat-card">
+          <p>Arrived</p>
+          <strong id="stat-arrived">0</strong>
+        </article>
+        <article class="panel stat-card">
+          <p>Pending</p>
+          <strong id="stat-pending">0</strong>
+        </article>
+        <article class="panel stat-card">
+          <p>Average Delay</p>
+          <strong id="stat-delay">-</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="row-head">
+          <h2>Guest Attendance</h2>
+          <div class="controls">
+            <label>
+              Filter
+              <select id="filter-status">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="arrived">Arrived</option>
+                <option value="no-show">No-show</option>
+              </select>
+            </label>
+            <button id="export-csv" type="button">Export CSV</button>
+            <button id="clear-all" type="button" class="danger">Clear Guests</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Guest</th>
+                <th>Expected</th>
+                <th>Status</th>
+                <th>Arrived At</th>
+                <th>Delta</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="guest-rows"></tbody>
+          </table>
+          <p id="empty-state" class="empty-state">
+            No guests yet. Add names to start your Majlees attendance list.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <template id="guest-row-template">
+      <tr>
+        <td>
+          <input class="inline-input name-input" type="text" maxlength="60" />
+        </td>
+        <td>
+          <input class="inline-input expected-input" type="time" />
+        </td>
+        <td>
+          <span class="status-pill"></span>
+        </td>
+        <td class="arrived-at">-</td>
+        <td class="delta">-</td>
+        <td class="actions">
+          <button class="action checkin" type="button">Check In</button>
+          <button class="action no-show" type="button">No-show</button>
+          <button class="action reset" type="button">Reset</button>
+          <button class="action remove" type="button">Remove</button>
+        </td>
+      </tr>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
