@@ -26,6 +26,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -398,17 +399,34 @@ tbody td {
   font-weight: 600;
 }
 
+[data-admin-only] {
+  display: none !important;
+}
+
+.admin-mode #session-controls[data-admin-only] {
+  display: grid !important;
+}
+
+.admin-mode #filter-group[data-admin-only] {
+  display: grid !important;
+}
+
+.admin-mode #export-csv[data-admin-only],
+.admin-mode #clear-all[data-admin-only] {
+  display: inline-flex !important;
+}
+
 .guest-mode table {
-  min-width: 560px;
+  min-width: 0;
 }
 
 /* Enforce guest-only columns even if stale JS is temporarily cached. */
-body.guest-mode thead th:nth-child(4),
-body.guest-mode thead th:nth-child(5),
-body.guest-mode thead th:nth-child(6),
-body.guest-mode tbody td:nth-child(4),
-body.guest-mode tbody td:nth-child(5),
-body.guest-mode tbody td:nth-child(6) {
+.guest-mode thead th:nth-child(4),
+.guest-mode thead th:nth-child(5),
+.guest-mode thead th:nth-child(6),
+.guest-mode tbody td:nth-child(4),
+.guest-mode tbody td:nth-child(5),
+.guest-mode tbody td:nth-child(6) {
   display: none;
 }
 

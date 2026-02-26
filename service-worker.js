@@ -1,13 +1,13 @@
-const CACHE_NAME = "majlees-attendance-v5";
+const CACHE_NAME = "majlees-attendance-v6";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260226-3",
-  "./app.js?v=20260226-3",
-  "./manifest.webmanifest?v=20260226-3",
-  "./icon.svg?v=20260226-3",
-  "./firebase-config.js?v=20260226-3",
-  "./service-worker.js?v=20260226-3",
+  "./styles.css?v=20260226-4",
+  "./app.js?v=20260226-4",
+  "./manifest.webmanifest?v=20260226-4",
+  "./icon.svg?v=20260226-4",
+  "./firebase-config.js?v=20260226-4",
+  "./service-worker.js?v=20260226-4",
 ];
 
 self.addEventListener("install", (event) => {

@@ -66,6 +66,7 @@ const dom = {
   statPending: document.getElementById("stat-pending"),
   statDelay: document.getElementById("stat-delay"),
   statsSection: document.getElementById("stats-section"),
+  attendanceSection: document.getElementById("attendance-section"),
   nextUp: document.getElementById("next-up"),
   timeline: document.getElementById("timeline"),
   rowTemplate: document.getElementById("guest-row-template"),
@@ -84,6 +85,8 @@ function init() {
   if (GUEST_ONLY_MODE) {
     state.filter = "all";
     applyGuestModeUi();
+  } else {
+    applyAdminModeUi();
   }
 
   if (!dom.guestExpected.value) {
@@ -717,15 +720,22 @@ function normalizeHost(host) {
 }
 
 function applyGuestModeUi() {
+  document.documentElement.classList.add("guest-mode");
   document.body.classList.add("guest-mode");
   dom.sessionControls?.classList.add("hidden");
   dom.statsSection?.classList.add("hidden");
+  dom.attendanceSection?.classList.add("hidden");
   dom.filterGroup?.classList.add("hidden");
   dom.exportCsv?.classList.add("hidden");
   dom.clearAll?.classList.add("hidden");
   dom.colArrived?.classList.add("hidden");
   dom.colDelta?.classList.add("hidden");
   dom.colActions?.classList.add("hidden");
+}
+
+function applyAdminModeUi() {
+  document.documentElement.classList.add("admin-mode");
+  document.body.classList.add("admin-mode");
 }
 
 function setSyncStatus(message, tone = "muted") {
@@ -905,7 +915,7 @@ function registerServiceWorker() {
 
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./service-worker.js?v=20260226-3", { updateViaCache: "none" })
+      .register("./service-worker.js?v=20260226-4", { updateViaCache: "none" })
       .catch(() => {});
   });
 }
