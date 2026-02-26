@@ -190,6 +190,7 @@ function renderTable() {
     const nameCell = nameInput.closest("td");
     const expectedCell = expectedInput.closest("td");
     const statusPill = row.querySelector(".status-pill");
+    const statusCell = statusPill.closest("td");
     const arrivedAtCell = row.querySelector(".arrived-at");
     const deltaCell = row.querySelector(".delta");
     const checkInButton = row.querySelector(".checkin");
@@ -197,6 +198,13 @@ function renderTable() {
     const resetButton = row.querySelector(".reset");
     const removeButton = row.querySelector(".remove");
     const actionsCell = row.querySelector(".actions");
+
+    nameCell.dataset.label = "Guest";
+    expectedCell.dataset.label = "Expected";
+    statusCell.dataset.label = "Status";
+    arrivedAtCell.dataset.label = "Arrived At";
+    deltaCell.dataset.label = "Delta";
+    actionsCell.dataset.label = "Actions";
 
     populateGuestNameSelect(nameInput, guest.name);
     expectedInput.value = guest.expectedArrival;
@@ -684,6 +692,20 @@ function applyGuestModeUi() {
   dom.colActions?.classList.add("hidden");
 }
 
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  if (window.location.protocol === "file:") {
+    return;
+  }
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}
+
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -710,3 +732,5 @@ function newId() {
 
   return `guest-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
+
+registerServiceWorker();

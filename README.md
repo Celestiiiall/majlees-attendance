@@ -1,6 +1,7 @@
 # Majlees Attendance
 
 A lightweight web app to track Majlees attendance with:
+- Dark mode by default
 - Session date and start time
 - Host details shown in summary (`Majlees Senior` or `Majlees Junior`)
 - Guest list with expected arrival times
@@ -8,6 +9,7 @@ A lightweight web app to track Majlees attendance with:
 - Status tracking (`Pending`, `Arrived`, `No-show`)
 - Consolidated summary cards and arrival outlook
 - CSV export
+- Installable as a phone app (PWA)
 
 Current default is `Guest-only mode`:
 - Guests can only submit `name + expected arrival time`
@@ -19,6 +21,10 @@ Admin access:
 - Example: `https://celestiiiall.github.io/majlees-attendance/?admin=1`
 
 Note: this is a convenience toggle in a static app, not secure authentication.
+
+Phone app install:
+- iPhone (Safari): open the URL, tap Share, then `Add to Home Screen`.
+- Android (Chrome): open the URL, tap menu, then `Install app`.
 
 ## Run locally
 

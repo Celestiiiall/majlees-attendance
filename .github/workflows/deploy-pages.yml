@@ -30,7 +30,7 @@ jobs:
       - name: Prepare static files
         run: |
           mkdir -p dist
-          cp index.html styles.css app.js .nojekyll dist/
+          cp index.html styles.css app.js manifest.webmanifest service-worker.js icon.svg .nojekyll dist/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

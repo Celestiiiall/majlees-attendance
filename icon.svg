@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Majlees Attendance">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1322" />
+      <stop offset="1" stop-color="#17243a" />
+    </linearGradient>
+    <linearGradient id="stripe" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a3d" />
+      <stop offset="1" stop-color="#30b3aa" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="120" fill="url(#bg)" />
+  <rect x="84" y="104" width="344" height="304" rx="36" fill="#0f1a2d" stroke="#2a3f62" stroke-width="10" />
+  <rect x="116" y="146" width="280" height="26" rx="13" fill="url(#stripe)" />
+  <rect x="116" y="198" width="176" height="24" rx="12" fill="#8da9cc" />
+  <rect x="116" y="244" width="216" height="24" rx="12" fill="#8da9cc" />
+  <rect x="116" y="290" width="136" height="24" rx="12" fill="#8da9cc" />
+  <circle cx="368" cy="292" r="40" fill="#1d334f" />
+  <path d="M350 292l14 14 24-28" fill="none" stroke="#6be3b6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
