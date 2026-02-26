@@ -30,6 +30,16 @@ const ALLOWED_GUEST_NAME_SET = new Set(ALLOWED_GUEST_NAMES);
 const ADMIN_QUERY_PARAM = "admin";
 const IS_ADMIN = new URLSearchParams(window.location.search).get(ADMIN_QUERY_PARAM) === "1";
 const GUEST_ONLY_MODE = !IS_ADMIN;
+const DEFAULT_SYNC_ROOM = "majlees-main";
+const DEFAULT_SYNC_ROOT = "majleesAttendance";
+
+let cloudSyncRef = null;
+let cloudSyncReady = false;
+let cloudSyncFirstSnapshotHandled = false;
+let cloudSyncLastPayload = "";
+let cloudSyncPendingWrite = false;
+let cloudSyncEnabled = false;
+let cloudSyncRoomId = DEFAULT_SYNC_ROOM;
 
 const dom = {
   sessionDate: document.getElementById("session-date"),
@@ -38,6 +48,7 @@ const dom = {
   saveSession: document.getElementById("save-session"),
   sessionControls: document.getElementById("session-controls"),
   sessionSummary: document.getElementById("session-summary"),
+  syncStatus: document.getElementById("sync-status"),
   guestForm: document.getElementById("guest-form"),
   guestName: document.getElementById("guest-name"),
   guestExpected: document.getElementById("guest-expected"),
@@ -67,9 +78,7 @@ init();
 function init() {
   renderGuestNameOptions();
 
-  dom.sessionDate.value = state.session.date;
-  dom.sessionTime.value = state.session.time;
-  dom.sessionHost.value = normalizeHost(state.session.host);
+  syncSessionControlsFromState();
   dom.filterStatus.value = GUEST_ONLY_MODE ? "all" : state.filter;
 
   if (GUEST_ONLY_MODE) {
@@ -113,6 +122,13 @@ function init() {
   }
 
   render();
+  initCloudSync();
+}
+
+function syncSessionControlsFromState() {
+  dom.sessionDate.value = state.session.date;
+  dom.sessionTime.value = state.session.time;
+  dom.sessionHost.value = normalizeHost(state.session.host);
 }
 
 function handleSaveSession() {
@@ -606,16 +622,63 @@ function escapeCsv(value) {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
-function loadState() {
-  const fallback = {
-    session: {
-      date: getTodayDateInput(),
-      time: getNowTimeInput(),
-      host: DEFAULT_HOST,
-    },
-    guests: [],
-    filter: "all",
+function getDefaultSession() {
+  return {
+    date: getTodayDateInput(),
+    time: getNowTimeInput(),
+    host: DEFAULT_HOST,
   };
+}
+
+function sanitizeSession(session, fallbackSession = getDefaultSession()) {
+  const date =
+    typeof session?.date === "string" && session.date.length >= 10
+      ? session.date.slice(0, 10)
+      : fallbackSession.date;
+  const time =
+    typeof session?.time === "string" && session.time.includes(":")
+      ? session.time
+      : fallbackSession.time;
+
+  return {
+    date,
+    time,
+    host: normalizeHost(session?.host),
+  };
+}
+
+function sanitizeGuests(guests, fallbackTime) {
+  if (!Array.isArray(guests)) {
+    return [];
+  }
+
+  return guests.reduce((list, guest) => {
+    const name = normalizeGuestName(guest?.name);
+    if (!name) {
+      return list;
+    }
+    if (list.some((item) => item.name === name)) {
+      return list;
+    }
+
+    list.push({
+      id: typeof guest.id === "string" ? guest.id : newId(),
+      name,
+      expectedArrival:
+        typeof guest.expectedArrival === "string" && guest.expectedArrival.includes(":")
+          ? guest.expectedArrival
+          : fallbackTime,
+      status: normalizeStatus(guest.status),
+      actualArrival: typeof guest.actualArrival === "string" ? guest.actualArrival : null,
+      createdAt: typeof guest.createdAt === "string" ? guest.createdAt : new Date().toISOString(),
+    });
+    return list;
+  }, []);
+}
+
+function loadState() {
+  const fallbackSession = getDefaultSession();
+  const fallback = { session: fallbackSession, guests: [], filter: "all" };
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -624,37 +687,8 @@ function loadState() {
     }
 
     const parsed = JSON.parse(raw);
-
-    const session = {
-      date: typeof parsed?.session?.date === "string" ? parsed.session.date : fallback.session.date,
-      time: typeof parsed?.session?.time === "string" ? parsed.session.time : fallback.session.time,
-      host: normalizeHost(parsed?.session?.host),
-    };
-
-    const guests = Array.isArray(parsed?.guests)
-      ? parsed.guests.reduce((list, guest) => {
-          const name = normalizeGuestName(guest?.name);
-          if (!name) {
-            return list;
-          }
-          if (list.some((item) => item.name === name)) {
-            return list;
-          }
-
-          list.push({
-            id: typeof guest.id === "string" ? guest.id : newId(),
-            name,
-            expectedArrival:
-              typeof guest.expectedArrival === "string" && guest.expectedArrival.includes(":")
-                ? guest.expectedArrival
-                : session.time,
-            status: normalizeStatus(guest.status),
-            actualArrival: typeof guest.actualArrival === "string" ? guest.actualArrival : null,
-            createdAt: typeof guest.createdAt === "string" ? guest.createdAt : new Date().toISOString(),
-          });
-          return list;
-        }, [])
-      : [];
+    const session = sanitizeSession(parsed?.session, fallbackSession);
+    const guests = sanitizeGuests(parsed?.guests, session.time);
 
     const filter = ["all", "pending", "arrived", "no-show"].includes(parsed?.filter)
       ? parsed.filter
@@ -694,6 +728,172 @@ function applyGuestModeUi() {
   dom.colActions?.classList.add("hidden");
 }
 
+function setSyncStatus(message, tone = "muted") {
+  if (!dom.syncStatus) {
+    return;
+  }
+
+  dom.syncStatus.textContent = message;
+  dom.syncStatus.className = `sync-status ${tone}`;
+}
+
+function getCloudSyncConfig() {
+  const config = window.MAJLEES_SYNC && typeof window.MAJLEES_SYNC === "object"
+    ? window.MAJLEES_SYNC
+    : {};
+
+  return {
+    enabled: config.enabled === true,
+    roomId:
+      typeof config.roomId === "string" && config.roomId.trim()
+        ? config.roomId.trim()
+        : DEFAULT_SYNC_ROOM,
+    databaseRoot:
+      typeof config.databaseRoot === "string" && config.databaseRoot.trim()
+        ? config.databaseRoot.trim()
+        : DEFAULT_SYNC_ROOT,
+    firebaseConfig:
+      config.firebaseConfig && typeof config.firebaseConfig === "object" ? config.firebaseConfig : null,
+  };
+}
+
+function initCloudSync() {
+  const config = getCloudSyncConfig();
+
+  if (!config.enabled) {
+    setSyncStatus("Local mode only. Configure firebase-config.js to share updates with everyone.");
+    return;
+  }
+
+  if (!window.firebase || typeof window.firebase.database !== "function") {
+    setSyncStatus("Cloud sync unavailable (Firebase script not loaded).", "error");
+    return;
+  }
+
+  if (!config.firebaseConfig || !config.firebaseConfig.apiKey || !config.firebaseConfig.databaseURL) {
+    setSyncStatus("Cloud sync disabled. Fill firebaseConfig in firebase-config.js.", "warn");
+    return;
+  }
+
+  try {
+    const firebaseApp = window.firebase.apps.length
+      ? window.firebase.app()
+      : window.firebase.initializeApp(config.firebaseConfig);
+
+    const db = window.firebase.database(firebaseApp);
+    cloudSyncRoomId = config.roomId;
+    cloudSyncRef = db.ref(`${config.databaseRoot}/${config.roomId}`);
+    cloudSyncEnabled = true;
+    setSyncStatus(`Connecting live sync for room: ${cloudSyncRoomId}...`);
+
+    cloudSyncRef.on(
+      "value",
+      (snapshot) => {
+        handleCloudSnapshot(snapshot.val());
+      },
+      () => {
+        setSyncStatus("Cloud sync error. Using local data until reconnect.", "error");
+      },
+    );
+  } catch {
+    setSyncStatus("Cloud sync initialization failed. Using local mode.", "error");
+  }
+}
+
+function handleCloudSnapshot(rawRemote) {
+  if (!cloudSyncFirstSnapshotHandled) {
+    cloudSyncFirstSnapshotHandled = true;
+    cloudSyncReady = true;
+    setSyncStatus(`Live sync active (${cloudSyncRoomId}).`, "ok");
+  }
+
+  if (!rawRemote) {
+    if (cloudSyncPendingWrite || !cloudSyncLastPayload) {
+      pushCloudState(true);
+    }
+    return;
+  }
+
+  const remoteShared = normalizeSharedState(rawRemote);
+  const remotePayload = serializeSharedState(remoteShared);
+  const localPayload = serializeSharedState({
+    session: sanitizeSession(state.session, getDefaultSession()),
+    guests: sanitizeGuests(state.guests, sanitizeSession(state.session, getDefaultSession()).time),
+  });
+
+  cloudSyncLastPayload = remotePayload;
+
+  if (remotePayload === localPayload) {
+    cloudSyncPendingWrite = false;
+    return;
+  }
+
+  cloudSyncPendingWrite = false;
+  applyRemoteSharedState(remoteShared);
+}
+
+function normalizeSharedState(rawState) {
+  const fallbackSession = getDefaultSession();
+  const session = sanitizeSession(rawState?.session, fallbackSession);
+  const guests = sanitizeGuests(rawState?.guests, session.time);
+  return { session, guests };
+}
+
+function applyRemoteSharedState(sharedState) {
+  state.session = sharedState.session;
+  state.guests = sharedState.guests;
+
+  syncSessionControlsFromState();
+
+  if (!dom.guestExpected.value || !dom.guestExpected.value.includes(":")) {
+    dom.guestExpected.value = state.session.time || getNowTimeInput();
+  }
+
+  saveState({ skipCloud: true });
+  render();
+}
+
+function serializeSharedState(sharedState) {
+  return JSON.stringify({
+    session: sharedState.session,
+    guests: sharedState.guests,
+  });
+}
+
+function pushCloudState(force = false) {
+  if (!cloudSyncEnabled || !cloudSyncRef) {
+    return;
+  }
+
+  if (!cloudSyncReady && !force) {
+    return;
+  }
+
+  const session = sanitizeSession(state.session, getDefaultSession());
+  const guests = sanitizeGuests(state.guests, session.time);
+  const sharedState = { session, guests };
+  const nextPayload = serializeSharedState(sharedState);
+
+  if (!force && nextPayload === cloudSyncLastPayload) {
+    cloudSyncPendingWrite = false;
+    return;
+  }
+
+  cloudSyncLastPayload = nextPayload;
+  cloudSyncPendingWrite = false;
+
+  cloudSyncRef
+    .set({
+      ...sharedState,
+      updatedAt: Date.now(),
+      updatedBy: IS_ADMIN ? "admin" : "guest",
+    })
+    .catch(() => {
+      setSyncStatus("Live sync write failed. Will retry on next change.", "error");
+      cloudSyncPendingWrite = true;
+    });
+}
+
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) {
     return;
@@ -705,13 +905,20 @@ function registerServiceWorker() {
 
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./service-worker.js?v=20260226-2", { updateViaCache: "none" })
+      .register("./service-worker.js?v=20260226-3", { updateViaCache: "none" })
       .catch(() => {});
   });
 }
 
-function saveState() {
+function saveState(options = {}) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  if (options.skipCloud) {
+    return;
+  }
+
+  cloudSyncPendingWrite = true;
+  pushCloudState();
 }
 
 function getTodayDateInput() {

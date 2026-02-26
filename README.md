@@ -10,6 +10,7 @@ A lightweight web app to track Majlees attendance with:
 - Consolidated summary cards and arrival outlook
 - CSV export
 - Installable as a phone app (PWA)
+- Optional live sync for all users via Firebase Realtime Database
 
 Current default is `Guest-only mode`:
 - Guests can only submit `name + expected arrival time`
@@ -64,4 +65,21 @@ git push -u origin main
 
 ## Data storage
 
-Data is stored in browser `localStorage` under key `majlees-attendance-v1`.
+By default data is stored in browser `localStorage` under key `majlees-attendance-v1`.
+
+## Enable shared updates for everyone (session + guest list)
+
+To make all users see the same session and guest list in real time:
+
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com/).
+2. Enable `Realtime Database` in that project.
+3. Set database rules for authenticated/controlled access (for quick testing only, you can allow read/write).
+4. In this repo, open `firebase-config.js` and fill:
+   - `enabled: true`
+   - `firebaseConfig` fields from Firebase project settings
+   - optional `roomId` (default is `majlees-main`)
+5. Push to GitHub Pages again.
+
+After that:
+- Admin session changes sync to everyone.
+- Guest additions/updates sync to everyone.

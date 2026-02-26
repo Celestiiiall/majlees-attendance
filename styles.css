@@ -264,6 +264,24 @@ button:active {
   font-size: 0.92rem;
 }
 
+.sync-status {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.sync-status.ok {
+  color: #9af2c4;
+}
+
+.sync-status.warn {
+  color: #ffd98d;
+}
+
+.sync-status.error {
+  color: #ffafaf;
+}
+
 .stats {
   display: grid;
   gap: 12px;
