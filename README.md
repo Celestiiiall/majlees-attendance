@@ -11,6 +11,7 @@ A lightweight web app to track Majlees attendance with:
 
 Current default is `Guest-only mode`:
 - Guests can only submit `name + expected arrival time`
+- Guest names are restricted to your predefined alphabetical list
 - Host/session/admin controls are hidden from the public page
 
 Admin access:

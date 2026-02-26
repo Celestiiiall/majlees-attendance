@@ -55,7 +55,9 @@
           <form id="guest-form" class="guest-form">
             <label>
               Guest Name
-              <input id="guest-name" type="text" placeholder="e.g., Qahtani" required />
+              <select id="guest-name" required>
+                <option value="" selected disabled>Select your name</option>
+              </select>
             </label>
             <label>
               Expected Arrival
@@ -133,7 +135,7 @@
     <template id="guest-row-template">
       <tr>
         <td>
-          <input class="inline-input name-input" type="text" maxlength="60" />
+          <select class="inline-input name-input"></select>
         </td>
         <td>
           <input class="inline-input expected-input" type="time" />

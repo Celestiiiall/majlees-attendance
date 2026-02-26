@@ -1,6 +1,32 @@
 const STORAGE_KEY = "majlees-attendance-v1";
 const HOST_OPTIONS = ["Majlees Senior", "Majlees Junior"];
 const DEFAULT_HOST = HOST_OPTIONS[0];
+const ALLOWED_GUEST_NAMES = [
+  "3bdu",
+  "3bood Saudi",
+  "7mny",
+  "A. Qubaisi",
+  "Ali Alhumairi",
+  "Ali Alzaabi",
+  "Fahad",
+  "Huzz",
+  "Jumniabi",
+  "Lari",
+  "Majlees Junior",
+  "Mane",
+  "Naser",
+  "Omar Almansoori",
+  "Omar nonchalant",
+  "Qahtani",
+  "Ramahi",
+  "S3ood",
+  "Sanad",
+  "SQ",
+  "Thani",
+  "Zayed indomie",
+  "Zayed Saif",
+];
+const ALLOWED_GUEST_NAME_SET = new Set(ALLOWED_GUEST_NAMES);
 const ADMIN_QUERY_PARAM = "admin";
 const IS_ADMIN = new URLSearchParams(window.location.search).get(ADMIN_QUERY_PARAM) === "1";
 const GUEST_ONLY_MODE = !IS_ADMIN;
@@ -38,6 +64,8 @@ const state = loadState();
 init();
 
 function init() {
+  renderGuestNameOptions();
+
   dom.sessionDate.value = state.session.date;
   dom.sessionTime.value = state.session.time;
   dom.sessionHost.value = normalizeHost(state.session.host);
@@ -104,10 +132,15 @@ function handleSaveSession() {
 function handleAddGuest(event) {
   event.preventDefault();
 
-  const name = dom.guestName.value.trim();
+  const name = normalizeGuestName(dom.guestName.value);
   const expectedArrival = dom.guestExpected.value;
 
   if (!name || !expectedArrival) {
+    return;
+  }
+
+  if (hasGuestWithName(name)) {
+    window.alert(`${name} is already on the list.`);
     return;
   }
 
@@ -165,7 +198,7 @@ function renderTable() {
     const removeButton = row.querySelector(".remove");
     const actionsCell = row.querySelector(".actions");
 
-    nameInput.value = guest.name;
+    populateGuestNameSelect(nameInput, guest.name);
     expectedInput.value = guest.expectedArrival;
 
     setStatusPill(statusPill, guest.status);
@@ -194,8 +227,13 @@ function renderTable() {
       actionsCell.classList.add("hidden");
     } else {
       nameInput.addEventListener("change", (event) => {
-        const value = event.target.value.trim();
+        const value = normalizeGuestName(event.target.value);
         if (!value) {
+          event.target.value = guest.name;
+          return;
+        }
+        if (hasGuestWithName(value, guest.id)) {
+          window.alert(`${value} is already on the list.`);
           event.target.value = guest.name;
           return;
         }
@@ -343,13 +381,77 @@ function updateGuest(id, updates) {
     return;
   }
 
+  const currentGuest = state.guests[index];
+  const nextName =
+    typeof updates.name === "string" ? normalizeGuestName(updates.name) : currentGuest.name;
+
+  if (!nextName || hasGuestWithName(nextName, id)) {
+    return;
+  }
+
   state.guests[index] = {
-    ...state.guests[index],
+    ...currentGuest,
     ...updates,
+    name: nextName,
   };
 
   saveState();
   render();
+}
+
+function renderGuestNameOptions() {
+  dom.guestName.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select your name";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  dom.guestName.appendChild(placeholder);
+
+  ALLOWED_GUEST_NAMES.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    dom.guestName.appendChild(option);
+  });
+}
+
+function populateGuestNameSelect(selectElement, selectedName) {
+  selectElement.innerHTML = "";
+
+  const names = [...ALLOWED_GUEST_NAMES];
+  if (selectedName && !ALLOWED_GUEST_NAME_SET.has(selectedName)) {
+    names.unshift(selectedName);
+  }
+
+  names.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    selectElement.appendChild(option);
+  });
+
+  selectElement.value = selectedName;
+}
+
+function hasGuestWithName(name, excludeGuestId = null) {
+  return state.guests.some((guest) => {
+    return guest.name === name && guest.id !== excludeGuestId;
+  });
+}
+
+function normalizeGuestName(name) {
+  if (typeof name !== "string") {
+    return null;
+  }
+
+  const value = name.trim();
+  if (!ALLOWED_GUEST_NAME_SET.has(value)) {
+    return null;
+  }
+
+  return value;
 }
 
 function setStatusPill(element, status) {
@@ -521,11 +623,18 @@ function loadState() {
     };
 
     const guests = Array.isArray(parsed?.guests)
-      ? parsed.guests
-          .filter((guest) => guest && typeof guest.name === "string")
-          .map((guest) => ({
+      ? parsed.guests.reduce((list, guest) => {
+          const name = normalizeGuestName(guest?.name);
+          if (!name) {
+            return list;
+          }
+          if (list.some((item) => item.name === name)) {
+            return list;
+          }
+
+          list.push({
             id: typeof guest.id === "string" ? guest.id : newId(),
-            name: guest.name,
+            name,
             expectedArrival:
               typeof guest.expectedArrival === "string" && guest.expectedArrival.includes(":")
                 ? guest.expectedArrival
@@ -533,7 +642,9 @@ function loadState() {
             status: normalizeStatus(guest.status),
             actualArrival: typeof guest.actualArrival === "string" ? guest.actualArrival : null,
             createdAt: typeof guest.createdAt === "string" ? guest.createdAt : new Date().toISOString(),
-          }))
+          });
+          return list;
+        }, [])
       : [];
 
     const filter = ["all", "pending", "arrived", "no-show"].includes(parsed?.filter)
