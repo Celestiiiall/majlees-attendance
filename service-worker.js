@@ -1,11 +1,12 @@
-const CACHE_NAME = "majlees-attendance-v3";
+const CACHE_NAME = "majlees-attendance-v4";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./manifest.webmanifest",
-  "./icon.svg",
+  "./styles.css?v=20260226-2",
+  "./app.js?v=20260226-2",
+  "./manifest.webmanifest?v=20260226-2",
+  "./icon.svg?v=20260226-2",
+  "./service-worker.js?v=20260226-2",
 ];
 
 self.addEventListener("install", (event) => {

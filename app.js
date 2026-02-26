@@ -54,6 +54,7 @@ const dom = {
   statArrived: document.getElementById("stat-arrived"),
   statPending: document.getElementById("stat-pending"),
   statDelay: document.getElementById("stat-delay"),
+  statsSection: document.getElementById("stats-section"),
   nextUp: document.getElementById("next-up"),
   timeline: document.getElementById("timeline"),
   rowTemplate: document.getElementById("guest-row-template"),
@@ -684,6 +685,7 @@ function normalizeHost(host) {
 function applyGuestModeUi() {
   document.body.classList.add("guest-mode");
   dom.sessionControls?.classList.add("hidden");
+  dom.statsSection?.classList.add("hidden");
   dom.filterGroup?.classList.add("hidden");
   dom.exportCsv?.classList.add("hidden");
   dom.clearAll?.classList.add("hidden");
@@ -702,7 +704,9 @@ function registerServiceWorker() {
   }
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    navigator.serviceWorker
+      .register("./service-worker.js?v=20260226-2", { updateViaCache: "none" })
+      .catch(() => {});
   });
 }
 

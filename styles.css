@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --bg: #0c1018;
   --ink: #f3eee6;
   --muted: #b8aba0;
@@ -466,6 +467,15 @@ body.guest-mode tbody td:nth-child(6) {
   .app-shell {
     margin-top: 16px;
     width: min(96vw, 1180px);
+  }
+
+  .panel {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
   }
 
   .stats {

@@ -26,6 +26,10 @@ Phone app install:
 - iPhone (Safari): open the URL, tap Share, then `Add to Home Screen`.
 - Android (Chrome): open the URL, tap menu, then `Install app`.
 
+If an old theme/layout still appears after deploy:
+- Refresh the page once, then close and reopen the app.
+- If needed, remove and re-add the Home Screen app to clear old cache.
+
 ## Run locally
 
 This app has no dependencies.
