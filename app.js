@@ -19,6 +19,9 @@ const dom = {
   emptyState: document.getElementById("empty-state"),
   filterGroup: document.getElementById("filter-group"),
   filterStatus: document.getElementById("filter-status"),
+  colArrived: document.getElementById("col-arrived"),
+  colDelta: document.getElementById("col-delta"),
+  colActions: document.getElementById("col-actions"),
   exportCsv: document.getElementById("export-csv"),
   clearAll: document.getElementById("clear-all"),
   statTotal: document.getElementById("stat-total"),
@@ -151,6 +154,8 @@ function renderTable() {
 
     const nameInput = row.querySelector(".name-input");
     const expectedInput = row.querySelector(".expected-input");
+    const nameCell = nameInput.closest("td");
+    const expectedCell = expectedInput.closest("td");
     const statusPill = row.querySelector(".status-pill");
     const arrivedAtCell = row.querySelector(".arrived-at");
     const deltaCell = row.querySelector(".delta");
@@ -180,9 +185,13 @@ function renderTable() {
     resetButton.disabled = guest.status === "pending" && !guest.actualArrival;
 
     if (GUEST_ONLY_MODE) {
-      nameInput.disabled = true;
-      expectedInput.disabled = true;
-      actionsCell.textContent = "-";
+      nameCell.classList.add("read-only-cell");
+      expectedCell.classList.add("read-only-cell");
+      nameCell.textContent = guest.name;
+      expectedCell.textContent = formatTime(guest.expectedArrival);
+      arrivedAtCell.classList.add("hidden");
+      deltaCell.classList.add("hidden");
+      actionsCell.classList.add("hidden");
     } else {
       nameInput.addEventListener("change", (event) => {
         const value = event.target.value.trim();
@@ -554,10 +563,14 @@ function normalizeHost(host) {
 }
 
 function applyGuestModeUi() {
+  document.body.classList.add("guest-mode");
   dom.sessionControls?.classList.add("hidden");
   dom.filterGroup?.classList.add("hidden");
   dom.exportCsv?.classList.add("hidden");
   dom.clearAll?.classList.add("hidden");
+  dom.colArrived?.classList.add("hidden");
+  dom.colDelta?.classList.add("hidden");
+  dom.colActions?.classList.add("hidden");
 }
 
 function saveState() {
