@@ -1,4 +1,6 @@
 const STORAGE_KEY = "majlees-attendance-v1";
+const HOST_OPTIONS = ["Majlees Senior", "Majlees Junior"];
+const DEFAULT_HOST = HOST_OPTIONS[0];
 
 const dom = {
   sessionDate: document.getElementById("session-date"),
@@ -30,7 +32,7 @@ init();
 function init() {
   dom.sessionDate.value = state.session.date;
   dom.sessionTime.value = state.session.time;
-  dom.sessionHost.value = state.session.host;
+  dom.sessionHost.value = normalizeHost(state.session.host);
   dom.filterStatus.value = state.filter;
 
   if (!dom.guestExpected.value) {
@@ -67,7 +69,7 @@ function init() {
 function handleSaveSession() {
   const date = dom.sessionDate.value || getTodayDateInput();
   const time = dom.sessionTime.value || getNowTimeInput();
-  const host = dom.sessionHost.value.trim();
+  const host = normalizeHost(dom.sessionHost.value);
 
   state.session = { date, time, host };
   saveState();
@@ -113,7 +115,7 @@ function render() {
 }
 
 function renderSessionSummary() {
-  const hostText = state.session.host ? `Host: ${state.session.host}` : "Host: not set";
+  const hostText = `Host: ${normalizeHost(state.session.host)}`;
   const dateText = formatSessionDate(state.session.date);
   const timeText = formatTime(state.session.time);
   dom.sessionSummary.textContent = `${dateText} | Starts ${timeText} | ${hostText}`;
@@ -465,7 +467,7 @@ function loadState() {
     session: {
       date: getTodayDateInput(),
       time: getNowTimeInput(),
-      host: "",
+      host: DEFAULT_HOST,
     },
     guests: [],
     filter: "all",
@@ -482,7 +484,7 @@ function loadState() {
     const session = {
       date: typeof parsed?.session?.date === "string" ? parsed.session.date : fallback.session.date,
       time: typeof parsed?.session?.time === "string" ? parsed.session.time : fallback.session.time,
-      host: typeof parsed?.session?.host === "string" ? parsed.session.host : "",
+      host: normalizeHost(parsed?.session?.host),
     };
 
     const guests = Array.isArray(parsed?.guests)
@@ -517,6 +519,14 @@ function normalizeStatus(status) {
   }
 
   return "pending";
+}
+
+function normalizeHost(host) {
+  if (typeof host === "string" && HOST_OPTIONS.includes(host)) {
+    return host;
+  }
+
+  return DEFAULT_HOST;
 }
 
 function saveState() {

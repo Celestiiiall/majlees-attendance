@@ -2,7 +2,7 @@
 
 A lightweight web app to track Majlees attendance with:
 - Session date and start time
-- Host name
+- Host selection (`Majlees Senior` or `Majlees Junior`)
 - Guest list with expected arrival times
 - Check-in timestamps
 - Status tracking (`Pending`, `Arrived`, `No-show`)
