@@ -27,7 +27,7 @@
           </p>
         </div>
 
-        <div class="session-grid">
+        <div id="session-controls" class="session-grid">
           <label>
             Session Date
             <input id="session-date" type="date" />
@@ -46,6 +46,10 @@
           <button id="save-session" type="button">Save Session</button>
         </div>
 
+        <p id="mode-note" class="session-summary hidden">
+          Guest mode: add your name and expected arrival time only. Host/session settings are managed
+          separately.
+        </p>
         <p id="session-summary" class="session-summary"></p>
       </header>
 
@@ -55,7 +59,7 @@
           <form id="guest-form" class="guest-form">
             <label>
               Guest Name
-              <input id="guest-name" type="text" placeholder="e.g., Salem" required />
+              <input id="guest-name" type="text" placeholder="e.g., Qahtani" required />
             </label>
             <label>
               Expected Arrival
@@ -95,7 +99,7 @@
         <div class="row-head">
           <h2>Guest Attendance</h2>
           <div class="controls">
-            <label>
+            <label id="filter-group">
               Filter
               <select id="filter-status">
                 <option value="all">All</option>

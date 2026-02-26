@@ -1,18 +1,22 @@
 const STORAGE_KEY = "majlees-attendance-v1";
 const HOST_OPTIONS = ["Majlees Senior", "Majlees Junior"];
 const DEFAULT_HOST = HOST_OPTIONS[0];
+const GUEST_ONLY_MODE = true;
 
 const dom = {
   sessionDate: document.getElementById("session-date"),
   sessionTime: document.getElementById("session-time"),
   sessionHost: document.getElementById("session-host"),
   saveSession: document.getElementById("save-session"),
+  sessionControls: document.getElementById("session-controls"),
   sessionSummary: document.getElementById("session-summary"),
+  modeNote: document.getElementById("mode-note"),
   guestForm: document.getElementById("guest-form"),
   guestName: document.getElementById("guest-name"),
   guestExpected: document.getElementById("guest-expected"),
   guestRows: document.getElementById("guest-rows"),
   emptyState: document.getElementById("empty-state"),
+  filterGroup: document.getElementById("filter-group"),
   filterStatus: document.getElementById("filter-status"),
   exportCsv: document.getElementById("export-csv"),
   clearAll: document.getElementById("clear-all"),
@@ -33,35 +37,47 @@ function init() {
   dom.sessionDate.value = state.session.date;
   dom.sessionTime.value = state.session.time;
   dom.sessionHost.value = normalizeHost(state.session.host);
-  dom.filterStatus.value = state.filter;
+  dom.filterStatus.value = GUEST_ONLY_MODE ? "all" : state.filter;
+
+  if (GUEST_ONLY_MODE) {
+    state.filter = "all";
+    applyGuestModeUi();
+  }
 
   if (!dom.guestExpected.value) {
     dom.guestExpected.value = state.session.time || getNowTimeInput();
   }
 
-  dom.saveSession.addEventListener("click", handleSaveSession);
+  if (!GUEST_ONLY_MODE) {
+    dom.saveSession.addEventListener("click", handleSaveSession);
+  }
+
   dom.guestForm.addEventListener("submit", handleAddGuest);
-  dom.filterStatus.addEventListener("change", (event) => {
-    state.filter = event.target.value;
-    saveState();
-    render();
-  });
+  if (!GUEST_ONLY_MODE) {
+    dom.filterStatus.addEventListener("change", (event) => {
+      state.filter = event.target.value;
+      saveState();
+      render();
+    });
+  }
 
-  dom.exportCsv.addEventListener("click", exportGuestsCsv);
-  dom.clearAll.addEventListener("click", () => {
-    if (!state.guests.length) {
-      return;
-    }
+  if (!GUEST_ONLY_MODE) {
+    dom.exportCsv.addEventListener("click", exportGuestsCsv);
+    dom.clearAll.addEventListener("click", () => {
+      if (!state.guests.length) {
+        return;
+      }
 
-    const shouldClear = window.confirm("Clear all guest entries for this Majlees session?");
-    if (!shouldClear) {
-      return;
-    }
+      const shouldClear = window.confirm("Clear all guest entries for this Majlees session?");
+      if (!shouldClear) {
+        return;
+      }
 
-    state.guests = [];
-    saveState();
-    render();
-  });
+      state.guests = [];
+      saveState();
+      render();
+    });
+  }
 
   render();
 }
@@ -141,6 +157,7 @@ function renderTable() {
     const noShowButton = row.querySelector(".no-show");
     const resetButton = row.querySelector(".reset");
     const removeButton = row.querySelector(".remove");
+    const actionsCell = row.querySelector(".actions");
 
     nameInput.value = guest.name;
     expectedInput.value = guest.expectedArrival;
@@ -161,51 +178,57 @@ function renderTable() {
 
     resetButton.disabled = guest.status === "pending" && !guest.actualArrival;
 
-    nameInput.addEventListener("change", (event) => {
-      const value = event.target.value.trim();
-      if (!value) {
-        event.target.value = guest.name;
-        return;
-      }
-      updateGuest(guest.id, { name: value });
-    });
-
-    expectedInput.addEventListener("change", (event) => {
-      const value = event.target.value;
-      if (!value) {
-        event.target.value = guest.expectedArrival;
-        return;
-      }
-      updateGuest(guest.id, { expectedArrival: value });
-    });
-
-    checkInButton.addEventListener("click", () => {
-      updateGuest(guest.id, {
-        status: "arrived",
-        actualArrival: new Date().toISOString(),
+    if (GUEST_ONLY_MODE) {
+      nameInput.disabled = true;
+      expectedInput.disabled = true;
+      actionsCell.textContent = "-";
+    } else {
+      nameInput.addEventListener("change", (event) => {
+        const value = event.target.value.trim();
+        if (!value) {
+          event.target.value = guest.name;
+          return;
+        }
+        updateGuest(guest.id, { name: value });
       });
-    });
 
-    noShowButton.addEventListener("click", () => {
-      const nextStatus = guest.status === "no-show" ? "pending" : "no-show";
-      updateGuest(guest.id, {
-        status: nextStatus,
-        actualArrival: null,
+      expectedInput.addEventListener("change", (event) => {
+        const value = event.target.value;
+        if (!value) {
+          event.target.value = guest.expectedArrival;
+          return;
+        }
+        updateGuest(guest.id, { expectedArrival: value });
       });
-    });
 
-    resetButton.addEventListener("click", () => {
-      updateGuest(guest.id, {
-        status: "pending",
-        actualArrival: null,
+      checkInButton.addEventListener("click", () => {
+        updateGuest(guest.id, {
+          status: "arrived",
+          actualArrival: new Date().toISOString(),
+        });
       });
-    });
 
-    removeButton.addEventListener("click", () => {
-      state.guests = state.guests.filter((item) => item.id !== guest.id);
-      saveState();
-      render();
-    });
+      noShowButton.addEventListener("click", () => {
+        const nextStatus = guest.status === "no-show" ? "pending" : "no-show";
+        updateGuest(guest.id, {
+          status: nextStatus,
+          actualArrival: null,
+        });
+      });
+
+      resetButton.addEventListener("click", () => {
+        updateGuest(guest.id, {
+          status: "pending",
+          actualArrival: null,
+        });
+      });
+
+      removeButton.addEventListener("click", () => {
+        state.guests = state.guests.filter((item) => item.id !== guest.id);
+        saveState();
+        render();
+      });
+    }
 
     dom.guestRows.appendChild(fragment);
   });
@@ -527,6 +550,14 @@ function normalizeHost(host) {
   }
 
   return DEFAULT_HOST;
+}
+
+function applyGuestModeUi() {
+  dom.sessionControls?.classList.add("hidden");
+  dom.filterGroup?.classList.add("hidden");
+  dom.exportCsv?.classList.add("hidden");
+  dom.clearAll?.classList.add("hidden");
+  dom.modeNote?.classList.remove("hidden");
 }
 
 function saveState() {
