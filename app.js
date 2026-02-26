@@ -12,7 +12,6 @@ const dom = {
   saveSession: document.getElementById("save-session"),
   sessionControls: document.getElementById("session-controls"),
   sessionSummary: document.getElementById("session-summary"),
-  modeNote: document.getElementById("mode-note"),
   guestForm: document.getElementById("guest-form"),
   guestName: document.getElementById("guest-name"),
   guestExpected: document.getElementById("guest-expected"),
@@ -559,7 +558,6 @@ function applyGuestModeUi() {
   dom.filterGroup?.classList.add("hidden");
   dom.exportCsv?.classList.add("hidden");
   dom.clearAll?.classList.add("hidden");
-  dom.modeNote?.classList.remove("hidden");
 }
 
 function saveState() {
